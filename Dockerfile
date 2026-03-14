@@ -37,6 +37,7 @@ RUN apt-get update \
   libcurl4 \
   # Required to allows to identify file types when handling file uploads
   media-types \
+  curl \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
