@@ -112,10 +112,14 @@ class I18nMixin:
             )
             if errors:
                 raise ValidationError(errors)
+            # 未抛出时（如中国模式下 format_check/required_check 为 False）补全 cleaned_data
+            for key in address_form.data:
+                if key not in address_form.cleaned_data and key in address_form.fields:
+                    address_form.cleaned_data[key] = address_form.data.get(key)
 
-        if address_form.cleaned_data["metadata"] is None:
+        if address_form.cleaned_data.get("metadata") is None:
             address_form.cleaned_data["metadata"] = {}
-        if address_form.cleaned_data["private_metadata"] is None:
+        if address_form.cleaned_data.get("private_metadata") is None:
             address_form.cleaned_data["private_metadata"] = {}
         address_form.cleaned_data["validation_skipped"] = validation_skipped
 
@@ -176,6 +180,11 @@ class I18nMixin:
         if address_data.get("skip_validation"):
             cls.can_skip_address_validation(info)
             format_check = False
+
+        # 中国地址使用本土化表单（省/市/区/详细地址），关闭 i18n 格式与必填校验
+        if address_data.get("country") == "CN":
+            format_check = False
+            required_check = False
 
         site = get_site_promise(info.context).get()
         preserve_all_address_fields = site.settings.preserve_all_address_fields
